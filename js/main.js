@@ -1,5 +1,3 @@
-//https://www.youtube.com/watch?v=_CsGSE5gwTA 31:19초까지 했음
-
 const wordContainer = document.querySelector(".wordContainer"),
   words = wordContainer.querySelector("h1"),
   form = document.querySelector("form"),
@@ -9,19 +7,33 @@ const wordContainer = document.querySelector(".wordContainer"),
   point = pointContainer.querySelector(".point"),
   button = document.querySelector(".button");
 
-const GAME_TIME = 3;
+const GAME_TIME = 12;
 
+let checkInterval;
 let RandomWords = [];
 let score = 0;
 let wholeTime = GAME_TIME;
 let isPlaying = false;
 let timeInterval;
-buttonChange("게임시작");
+
+function checkStatus() {
+  if (!isPlaying && wholeTime === 0) {
+    buttonChange("게임시작");
+    clearInterval(checkInterval);
+  }
+}
 
 function run() {
+  if (isPlaying) {
+    return;
+  }
   isPlaying = true;
   wholeTime = GAME_TIME;
+  input.focus();
+  point.innerText = 0;
   timeInterval = setInterval(countDown, 1000);
+  checkInterval = setInterval(checkStatus, 5);
+  buttonChange("게임중~~!");
 }
 
 function buttonChange(text) {
@@ -39,29 +51,39 @@ function countDown() {
   time.innerText = wholeTime;
 }
 
-function handleSubmit(event) {
-  event.preventDefault();
+function handleSubmit() {
   if (input.value.toLowerCase() === words.innerText.toLowerCase()) {
+    input.value = "";
+    if (!isPlaying) {
+      return;
+    }
     score++;
     point.innerText = score;
-    input.value = "";
+    wholeTime = GAME_TIME;
+    const randomIndex = Math.floor(Math.random() * RandomWords.length);
+    words.innerText = RandomWords[randomIndex];
   }
 }
 
-input.addEventListener("input", handleSubmit);
+function loadWord() {
+  axios
+    .get("https://random-word-api.herokuapp.com/word?number=100")
+    .then(function (response) {
+      RandomWords = response.data;
 
-function matchWord() {
-  const inputValue = input.value;
-  const randomWordValue = words.value;
-  if (inputValue === randomWordValue) {
-    point.innerText = originPoint++;
-  }
+      buttonChange("게임시작");
+      console.log(response.data);
+    })
+    .catch(function (error) {
+      // handle error
+      console.log(error);
+    });
 }
-
-function loadWord() {}
 
 function init() {
   loadWord();
+  buttonChange("게임로딩중...");
+  input.addEventListener("input", handleSubmit);
 }
 
 init();
